@@ -429,7 +429,7 @@
       chain.push(currentWord);
       wordCount++;
       score += 10 + (fullWord.length - minLength);
-      if (wordCount % 3 === 0) minLength++;
+      if (wordCount % 3 === 0 && minLength < 10) minLength++;
       playDing();
       clearInterval(timerInterval);
       timeLeft = 30;
