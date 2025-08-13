@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WordGraft</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #000000;
+      color: #FFFFFF;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    #menu {
+      display: block;
+    }
+    #menu button {
+      display: block;
+      background: #007BFF;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      margin: 15px auto;
+      font-size: 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 80%;
+      max-width: 300px;
+    }
+    #game {
+      display: none;
+    }
+    #howToPlay {
+      display: none;
+      position: fixed;
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      max-width: 400px;
+      background: #1C2526;
+      color: #FFFFFF;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.2);
+      z-index: 10;
+      border-radius: 10px;
+    }
+    button {
+      background: #007BFF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    #currentWord {
+      font-size: 24px;
+      font-weight: bold;
+      color: #FFFFFF;
+    }
+    #minLength {
+      font-size: 18px;
+      color: #CCCCCC;
+    }
+    #input {
+      font-size: 20px;
+      width: 80%;
+      max-width: 300px;
+      padding: 10px;
+      text-transform: uppercase;
+      background: #333333;
+      color: #FFFFFF;
+      border: 1px solid #007BFF;
+      border-radius: 5px;
+    }
+    #timerBar {
+      height: 20px;
+      background: #00FF00;
+      width: 100%;
+      transition: width 0.1s, background 1s;
+      border-radius: 5px;
+      margin-top: 15px;
+      margin-bottom: 15px;
+    }
+    #undo {
+      position: fixed;
+      bottom: 250px;
+      left: 20px;
+      font-size: 18px;
+      cursor: pointer;
+      display: none;
+      background: #007BFF;
+      color: white;
+      padding: 10px;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: rotate(180deg);
+      z-index: 1000;
+      box-sizing: border-box;
+    }
+    #endScreen {
+      display: none;
+      position: fixed;
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      max-width: 400px;
+      background: #1C2526;
+      color: #FFFFFF;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.2);
+      border-radius: 10px;
+    }
+    #adSpace {
+      margin-top: 20px;
+      height: 100px;
+      background: #333333;
+      border-radius: 5px;
+    }
+    #soundsToggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: #FFFFFF;
+    }
+    #errorPopup {
+      display: none;
+      position: relative;
+      margin-top: 10px;
+      left: 0;
+      transform: none;
+      width: 80%;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #FF0000;
+      color: #FFFFFF;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 1000;
+      font-size: 16px;
+    }
+    #tooShort {
+      display: none;
+      position: relative;
+      margin-top: 10px;
+      left: 0;
+      transform: none;
+      width: 80%;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #FF0000;
+      color: #FFFFFF;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 1000;
+      font-size: 16px;
+    }
+    @media (min-width: 768px) {
+      #adSpace {
+        float: right;
+        width: 200px;
+        height: auto;
+      }
+      #menu button {
+        width: 50%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <button onclick="startGame('daily')">Daily Word</button>
+    <button onclick="startGame('random')">Random Word</button>
+    <button onclick="showHowToPlay()">How To Play</button>
+    <label id="soundsToggle"><input type="checkbox" id="soundsCheckbox" checked> Sounds</label>
+  </div>
+  <div id="howToPlay">
+    <h2>How To Play WordGraft</h2>
+    <p>Link words by starting with the last two letters of the previous one (e.g., GAME → MEAL → ALSO → SOAP).</p>
+    <p>30-second timer per word—don't run out!</p>
+    <p>Minimum length starts at 3 letters, increases by 1 every 3 words.</p>
+    <p>Score: 10 points per word + 1 per extra letter over the minimum.</p>
+    <p>Avoid dead-end words like 'SPANK' (ends in NK - no words left). Use the undo button (up to 3 times) if you get stuck!</p>
+    <p>You can only use each word once!</p>
+    <button onclick="hideHowToPlay()">Close</button>
+  </div>
+  <div id="game">
+    <div id="minLength"></div>
+    <div id="currentWord"></div>
+    <div id="timerBar"></div>
+    <form autocomplete="off" onsubmit="event.preventDefault(); submitWord();">
+      <input id="input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div id="errorPopup">Word already used!</div>
+      <div id="tooShort">Too short!</div>
+    </form>
+    <div id="undo" onclick="undoLast()">↺</div>
+  </div>
+  <div id="endScreen">
+    <h2>Game Over!</h2>
+    <div id="scoreDisplay">Score: 0</div>
+    <div id="highScoreDisplay"></div>
+    <button id="showChainBtn">Show Chain</button>
+    <div id="chainList" style="display:none;"></div>
+    <button onclick="shareScore()">Share</button>
+    <button onclick="restart()">Play Again</button>
+    <div id="adSpace">Ad Here</div>
+  </div>
+
+  <script src="wordlist.js"></script>
+  <script src="startingwords.js"></script>
+  <script>
+    let currentPrefix = '';
+    let currentWord = '';
+    let chain = [];
+    let score = 0;
+    let minLength = 3;
+    let wordCount = 0;
+    let timerInterval;
+    let timeLeft = 30;
+    let prevWord = '';
+    let prevPrefix = '';
+    let prevTimeLeft = 0;
+    let prevScore = 0;
+    let prevMinLength = 3;
+    let prevWordCount = 0;
+    let lastUndone = '';
+    let undoCount = 0;
+    let isDaily = false;
+    let soundsOn = localStorage.getItem('soundsOn') !== 'false';
+    let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let lastTick = 8;
+
+    // Check for first-time visitor and show How to Play
+    window.onload = function() {
+      if (!localStorage.getItem('hasVisited')) {
+        showHowToPlay();
+        localStorage.setItem('hasVisited', 'true');
+      }
+    };
+
+    // Adjust undo button position when keyboard opens
+    const input = document.getElementById('input');
+    const undoButton = document.getElementById('undo');
+    input.addEventListener('focus', () => {
+      if (window.innerWidth < 768) { // Mobile devices
+        undoButton.style.bottom = `${Math.max(250, window.innerHeight * 0.5)}px`; // Dynamic height
+      }
+    });
+    input.addEventListener('blur', () => {
+      undoButton.style.bottom = '250px'; // Reset when keyboard closes
+    });
+
+    // Prevent closing keyboard on undo tap
+    undoButton.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      undoLast();
+    });
+
+    document.getElementById('soundsCheckbox').checked = soundsOn;
+    document.getElementById('soundsCheckbox').addEventListener('change', () => {
+      soundsOn = document.getElementById('soundsCheckbox').checked;
+      localStorage.setItem('soundsOn', soundsOn);
+    });
+
+    function playDing() {
+      if (!soundsOn) return;
+      let osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      osc.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function playBuzzer() {
+      if (!soundsOn) return;
+      let osc = audioCtx.createOscillator();
+      osc.type = 'square';
+      osc.frequency.value = 200;
+      osc.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.2);
+    }
+
+    function playTick() {
+      if (!soundsOn) return;
+      let osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 440;
+      osc.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.05);
+    }
+
+    function getDailyWord() {
+      const date = new Date();
+      const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+      return startingWords[seed % startingWords.length];
+    }
+
+    function startGame(mode) {
+      isDaily = mode === 'daily';
+      currentWord = (mode === 'daily' ? getDailyWord() : startingWords[Math.floor(Math.random() * startingWords.length)]).toUpperCase();
+      currentPrefix = currentWord.slice(-2).toUpperCase();
+      chain = [currentWord];
+      score = 0;
+      minLength = 3;
+      wordCount = 0;
+      undoCount = 0;
+      lastUndone = '';
+      prevWord = '';
+      document.getElementById('menu').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
+      document.getElementById('chainList').style.display = 'none';
+      document.getElementById('errorPopup').style.display = 'none';
+      document.getElementById('tooShort').style.display = 'none';
+      updateUI();
+      timeLeft = 30;
+      resumeTimer();
+    }
+
+    function updateUI() {
+      document.getElementById('minLength').textContent = `${minLength}+ letters`;
+      document.getElementById('currentWord').textContent = currentWord;
+      document.getElementById('input').value = currentPrefix;
+      document.getElementById('input').focus();
+      document.getElementById('undo').style.display = wordCount > 0 ? 'block' : 'none';
+    }
+
+    function resumeTimer() {
+      lastTick = Math.ceil(timeLeft);
+      updateTimerBar();
+      timerInterval = setInterval(() => {
+        timeLeft -= 0.1;
+        updateTimerBar();
+        if (timeLeft <= 7 && Math.floor(timeLeft) < lastTick) {
+          playTick();
+          lastTick = Math.floor(timeLeft);
+        }
+        if (timeLeft <= 0) endGame();
+      }, 100);
+    }
+
+    function updateTimerBar() {
+      const bar = document.getElementById('timerBar');
+      bar.style.width = `${(timeLeft / 30 * 100)}%`;
+      if (timeLeft > 15) bar.style.background = '#00FF00';
+      else if (timeLeft > 7) bar.style.background = '#FFFF00';
+      else bar.style.background = '#FF0000';
+    }
+
+    document.getElementById('input').addEventListener('keydown', (e) => {
+      const prefixLen = currentPrefix.length;
+      if ((e.key === 'Backspace' || e.key === 'Delete') && e.target.selectionStart <= prefixLen) e.preventDefault();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitWord();
+      }
+    });
+
+    function submitWord() {
+      let inputVal = document.getElementById('input').value.toUpperCase();
+      let fullWord = inputVal.trim();
+      if (fullWord.length < minLength) {
+        console.log(`Invalid: ${fullWord} too short (needs ${minLength})`);
+        playBuzzer();
+        document.getElementById('input').style.backgroundColor = 'red';
+        document.getElementById('tooShort').style.display = 'block';
+        setTimeout(() => {
+          document.getElementById('input').style.backgroundColor = '';
+          document.getElementById('input').value = currentPrefix;
+          document.getElementById('tooShort').style.display = 'none';
+        }, 500);
+        return;
+      }
+      if (!fullWord.startsWith(currentPrefix)) {
+        console.log(`Invalid: ${fullWord} doesn't start with ${currentPrefix}`);
+        playBuzzer();
+        document.getElementById('input').style.backgroundColor = 'red';
+        setTimeout(() => {
+          document.getElementById('input').style.backgroundColor = '';
+          document.getElementById('input').value = currentPrefix;
+        }, 200);
+        return;
+      }
+      if (!allWords.has(fullWord)) {
+        console.log(`Invalid: ${fullWord} not in word list`);
+        playBuzzer();
+        document.getElementById('input').style.backgroundColor = 'red';
+        setTimeout(() => {
+          document.getElementById('input').style.backgroundColor = '';
+          document.getElementById('input').value = currentPrefix;
+        }, 200);
+        return;
+      }
+      if (fullWord === currentWord || fullWord === lastUndone || chain.includes(fullWord)) {
+        console.log(`Invalid: ${fullWord} is current (${currentWord}), last undone (${lastUndone}), or already used in chain`);
+        playBuzzer();
+        document.getElementById('input').style.backgroundColor = 'red';
+        document.getElementById('errorPopup').style.display = 'block';
+        setTimeout(() => {
+          document.getElementById('input').style.backgroundColor = '';
+          document.getElementById('input').value = currentPrefix;
+          document.getElementById('errorPopup').style.display = 'none';
+        }, 650);
+        return;
+      }
+      // Valid word
+      prevWord = currentWord;
+      prevPrefix = currentPrefix;
+      prevTimeLeft = timeLeft;
+      prevScore = score;
+      prevMinLength = minLength;
+      prevWordCount = wordCount;
+      currentWord = fullWord;
+      currentPrefix = fullWord.slice(-2);
+      chain.push(currentWord);
+      wordCount++;
+      score += 10 + (fullWord.length - minLength);
+      if (wordCount % 3 === 0) minLength++;
+      playDing();
+      clearInterval(timerInterval);
+      timeLeft = 30;
+      resumeTimer();
+      updateUI();
+    }
+
+    function undoLast() {
+      if (undoCount >= 3 || wordCount === 0 || prevWord === '') return;
+      lastUndone = currentWord;
+      currentWord = prevWord;
+      currentPrefix = prevPrefix;
+      timeLeft = prevTimeLeft;
+      score = prevScore;
+      minLength = prevMinLength;
+      wordCount = prevWordCount;
+      chain.pop();
+      undoCount++;
+      clearInterval(timerInterval);
+      resumeTimer();
+      updateUI();
+      // Clear prev state to prevent multiple undos
+      prevWord = '';
+      prevPrefix = '';
+      prevTimeLeft = 0;
+      prevScore = 0;
+      prevMinLength = 3;
+      prevWordCount = 0;
+    }
+
+    function endGame() {
+      playBuzzer();
+      clearInterval(timerInterval);
+      document.getElementById('game').style.display = 'none';
+      document.getElementById('endScreen').style.display = 'block';
+      document.getElementById('chainList').style.display = 'none';
+      const highKey = isDaily ? 'dailyHigh' : 'randomHigh';
+      let high = parseInt(localStorage.getItem(highKey) || '0');
+      if (score > high) {
+        high = score;
+        localStorage.setItem(highKey, high);
+        document.getElementById('highScoreDisplay').textContent = 'New High Score: ' + high;
+      } else {
+        document.getElementById('highScoreDisplay').textContent = 'High Score: ' + high;
+      }
+      animateScore();
+    }
+
+    function animateScore() {
+      let display = 0;
+      const interval = setInterval(() => {
+        display += Math.ceil(score / 15);
+        if (display >= score) {
+          display = score;
+          clearInterval(interval);
+        }
+        document.getElementById('scoreDisplay').textContent = `Score: ${display}`;
+      }, 100);
+    }
+
+    document.getElementById('showChainBtn').addEventListener('click', () => {
+      const list = document.getElementById('chainList');
+      list.textContent = chain.join(' → ');
+      list.style.display = list.style.display === 'none' ? 'block' : 'none';
+    });
+
+    function shareScore() {
+      const text = isDaily ? `I just scored ${score} on WordGraft's daily word! Can you do better? https://yourusername.github.io/wordgraft/` : `I just scored ${score} points on WordGraft! Can you do better? https://yourusername.github.io/wordgraft/`;
+      if (navigator.share) {
+        navigator.share({ text });
+      } else {
+        navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!'));
+      }
+    }
+
+    function restart() {
+      document.getElementById('endScreen').style.display = 'none';
+      document.getElementById('chainList').style.display = 'none';
+      document.getElementById('menu').style.display = 'block';
+    }
+
+    function showHowToPlay() {
+      document.getElementById('howToPlay').style.display = 'block';
+    }
+
+    function hideHowToPlay() {
+      document.getElementById('howToPlay').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
