@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="WordGraft: A fun word-chaining game where you link words by their last two letters!">
   <title>WordGraft</title>
+  <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAYmJiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -495,7 +497,7 @@
     });
 
     function shareScore() {
-      const text = isDaily ? `I just scored ${score} on WordGraft's daily word! Can you do better? https://yourusername.github.io/wordgraft/` : `I just scored ${score} points on WordGraft! Can you do better? https://yourusername.github.io/wordgraft/`;
+      const text = isDaily ? `I just scored ${score} on WordGraft's daily word! Can you do better? https://TheRealNinjyata.github.io/wordgraft/` : `I just scored ${score} points on WordGraft! Can you do better? https://TheRealNinjyata.github.io/wordgraft/`;
       if (navigator.share) {
         navigator.share({ text });
       } else {
